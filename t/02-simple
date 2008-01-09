@@ -12,7 +12,8 @@ use Perl6::Signature;
     # just like their source. I incidentally use different sigils, can't
     # throw in the complete cartesian product here...
     my @sigs =
-        ( ':($x)',                'single required positional'
+        ( ':()',                  'empty signature',
+        , ':($x)',                'single required positional'
         , ':($x:)',               'invocant only'
         , ':(@x, $y)',            'two required positionals'
         , ':($x, %y?)',           'required and optional positionals'
