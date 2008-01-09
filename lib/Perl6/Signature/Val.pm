@@ -1,6 +1,6 @@
 package Perl6::Signature::Val;
 
-use Moose;
+use Moose 0.33;
 
 # Signature AST base. Add debug methods here?
 
@@ -35,7 +35,7 @@ has 's_requiredPositionalCount' =>
 has 's_requiredNames' =>
     (is => 'rw', isa => 'HashRef');   # Set of names
 has 's_positionalList' =>
-    (is => 'rw', isa => 'ArrayRef');  # to SigParams
+    (is => 'rw', isa => 'ArrayRef[Perl6::Signature::Val::SigParam]');
 has 's_namedSet' =>
     (is => 'rw', isa => 'HashRef');   # Hash name => param
 has 's_slurpyScalarList' =>
