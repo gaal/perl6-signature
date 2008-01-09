@@ -43,6 +43,14 @@ use Perl6::Signature;
     while (my ($sig, $desc) = splice @sigs, 0, 2) {
         lives_and { is(Perl6::Signature->parse($sig)->to_string, $sig) } $desc;
     }
+
+    my @badsigs =
+        ( ':($x?:)',              'optional invocant'
+        , ':($x?, $y)',           'required positional after optional one'
+        );
+    while (my ($badsig, $desc) = splice @badsigs, 0, 2) {
+        dies_ok { Perl6::Signature->parse($badsig) } "(badsig) $desc";
+    }
 }
 
 # vim:ft=perl:
