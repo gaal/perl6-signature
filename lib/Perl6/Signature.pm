@@ -16,8 +16,6 @@ our $SIGNATURE_GRAMMAR = << '.';
 
     Sigbody: Sigbody_inv | Sigbody_noinv
 
-    #Invocant: 'THIS_SHOULD_NEVER_MATCH' # predeclaration to silence warning
-
     Sigbody_inv: Invocant <skip:'\s*'> ':' <commit> Sigbody_noinv
         {
           my $sig = $item{Sigbody_noinv};
@@ -50,7 +48,7 @@ our $SIGNATURE_GRAMMAR = << '.';
     Invocant: Param
         {
           $return = $item{Param};
-          # die "invocant cannot be optional" unless $return->{required};
+          die "invocant cannot be optional" unless $return->{required};
           1;
         }
 

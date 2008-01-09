@@ -41,7 +41,6 @@ use Perl6::Signature;
         , ':(:x(%y) = (1 => 2))', 'longnamed hash with default'
         );
     while (my ($sig, $desc) = splice @sigs, 0, 2) {
-        my $parsed;
         lives_and { is(Perl6::Signature->parse($sig)->to_string, $sig) } $desc;
     }
 }
