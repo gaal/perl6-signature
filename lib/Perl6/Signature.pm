@@ -18,7 +18,7 @@ our $SIGNATURE_GRAMMAR = << '.';
 
     Sigbody: Sigbody_inv | Sigbody_noinv
 
-    Sigbody_inv: Invocant <skip:'\s*'> ':' <commit> Sigbody_noinv
+    Sigbody_inv: Invocant <skip:'\s*'> ':' Sigbody_noinv
         {
           my $sig = $item{Sigbody_noinv};
           die "invocant cannot be optional" unless $item{Invocant}->{required};

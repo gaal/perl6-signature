@@ -44,6 +44,20 @@ use Perl6::Signature;
         lives_and { is(Perl6::Signature->parse($sig)->to_string, $sig) } $desc;
     }
 
+    # alternate whitespace tests
+    @sigs =
+        ( ':( )',                 ':()',                  'empty signature',
+        , ':($x )',               ':($x)',                'single required positional'
+        , ':($x: )',              ':($x:)',               'invocant only'
+        , ':($x : )',             ':($x:)',               'invocant only, 2'
+        , ':(@x,$y)',             ':(@x, $y)',            'two required positionals'
+        , ':(@x,$y )',            ':(@x, $y)',            'two required positionals, 2'
+        , ':($x,%y?)',            ':($x, %y?)',           'required and optional positionals'
+        );
+    while (my ($sig, $canonical, $desc) = splice @sigs, 0, 3) {
+        lives_and { is(Perl6::Signature->parse($sig)->to_string, $canonical) } "(altspace) $desc";
+    }
+
     my @badsigs =
         ( ':($x?:)',              'optional invocant'
         , ':($x?, $y)',           'required positional after optional one'
