@@ -1,5 +1,7 @@
 package Perl6::Signature;
 
+use warnings;
+
 use Parse::RecDescent;
 use Perl6::Signature::Val;
 
@@ -19,6 +21,7 @@ our $SIGNATURE_GRAMMAR = << '.';
     Sigbody_inv: Invocant <skip:'\s*'> ':' <commit> Sigbody_noinv
         {
           my $sig = $item{Sigbody_noinv};
+          die "invocant cannot be optional" unless $item{Invocant}->{required};
           $sig->s_invocant( $item{Invocant}->{param} );
           $return = $sig;
         }
@@ -46,11 +49,6 @@ our $SIGNATURE_GRAMMAR = << '.';
         }
 
     Invocant: Param
-        {
-          $return = $item{Param};
-          die "invocant cannot be optional" unless $return->{required};
-          1;
-        }
 
     # positionals only for now
     Param: PositionalParam
@@ -99,8 +97,13 @@ our $SIGNATURE_GRAMMAR = << '.';
     ParamType: /[a-zA-Z]\w+/
 
     # Perl 6 allows placeholder parameters, e.g. :($) - sub of arity 1 (scalar).
-    Identifier: Sigil <skip:''> Label #(?)
-        { $return = { sigil => $item{Sigil}, label => $item{Label} } }
+    Identifier: Sigil <skip:''> Label(?)
+        {
+          my $label = @{ $item{'Label(?)'} } ? $item{'Label(?)'}->[0] : '';
+          $return = { sigil => $item{Sigil}
+                    , (label => @{ $item{'Label(?)'} } ? $item{'Label(?)'}->[0] : '')
+                    };
+        }
 
     OptionalityModifier: /[!?]/
 

@@ -25,7 +25,7 @@ use Perl6::Signature;
         , ':(:$x?)',              'optional named'
         , ':(:short($long))',     'long named'
         , ':(:short($long)?)',    'optional long named'
-        , ':($ : %x)',            'dummy invocant'
+        , ':($: %x)',             'dummy invocant'
         , ':($x :($y))',          'unpacking(1)'
         , ':($x :($y: $z))',      'unpacking(2)'
         , # add more here.
