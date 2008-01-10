@@ -19,12 +19,18 @@ use Perl6::Signature;
         , ':($x, %y?)',           'required and optional positionals'
         , ':($x is rw is ref is lazy is moose)', # note order matters :/
                                   'traits (including user defined)'
+        , ':($x where { $x->isa("Moose") })',
+                                  'constraint',
+        , ':($x where { $x->isa("Moose") } where { $x->does("Gimble") })',
+                                  'two constraints',
+        , ':(Int $x)',            'typed parameter',
+        , ':(Int $x, Str $y)',    'two typed parameter',
         , ':($x, $y, :$z)',       'positional and named'
         , ':($x, $y?, :$z)',      'optional positional and named'
-        , ':(:$x)',               'required named'
-        , ':(:$x?)',              'optional named'
+        , ':(:$x)',               'optional named'
+        , ':(:$x!)',              'required named'
         , ':(:short($long))',     'long named'
-        , ':(:short($long)?)',    'optional long named'
+        , ':(:short($long)!)',    'required long named'
         , ':($: %x)',             'dummy invocant'
         , ':($x :($y))',          'unpacking(1)'
         , ':($x :($y: $z))',      'unpacking(2)'
@@ -41,18 +47,21 @@ use Perl6::Signature;
         , ':(:x(%y) = (1 => 2))', 'longnamed hash with default'
         );
     while (my ($sig, $desc) = splice @sigs, 0, 2) {
-        lives_and { is(Perl6::Signature->parse($sig)->to_string, $sig) } $desc;
+        lives_and { is(Perl6::Signature->parse($sig)->to_string, $sig) } "$desc - $sig";
     }
 
-    # alternate whitespace tests
+    # alternate whitespace/formatting tests
     @sigs =
         ( ':( )',                 ':()',                  'empty signature',
+        , ':($x!)',               ':($x)',                'required positional, explicit "!"'
         , ':($x )',               ':($x)',                'single required positional'
         , ':($x: )',              ':($x:)',               'invocant only'
         , ':($x : )',             ':($x:)',               'invocant only, 2'
         , ':(@x,$y)',             ':(@x, $y)',            'two required positionals'
         , ':(@x,$y )',            ':(@x, $y)',            'two required positionals, 2'
         , ':($x,%y?)',            ':($x, %y?)',           'required and optional positionals'
+        , ':(:$x?)',              ':(:$x)',               'optional short named, explicit "?"'
+        , ':(:short($long)?)',    ':(:short($long))',     'optional long named, explicit "?"'
         );
     while (my ($sig, $canonical, $desc) = splice @sigs, 0, 3) {
         lives_and { is(Perl6::Signature->parse($sig)->to_string, $canonical) } "(altspace) $desc";

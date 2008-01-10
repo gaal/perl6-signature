@@ -25,6 +25,11 @@ data Sig = MkSig
 
 =cut
 
+# XXX: L<S06/"Bindings happen in declaration order, not call order">
+# suggests that requiredNames should be modeled with a list, not a set,
+# and that the compiler convert mandatory named args to positionals.
+# Fix this sometime.
+
 use Moose;
 extends 'Perl6::Signature::Val';
 
@@ -36,8 +41,8 @@ has 's_requiredNames' =>
     (is => 'rw', isa => 'HashRef');   # Set of names
 has 's_positionalList' =>
     (is => 'rw', isa => 'ArrayRef[Perl6::Signature::Val::SigParam]');
-has 's_namedSet' =>
-    (is => 'rw', isa => 'HashRef');   # Hash name => param
+has 's_namedList' =>
+    (is => 'rw', isa => 'ArrayRef[Perl6::Signature::Val::SigParam]');
 has 's_slurpyScalarList' =>
     (is => 'rw', isa => 'ArrayRef', required => 0);
 has 's_slurpyArray' =>
@@ -48,6 +53,14 @@ has 's_slurpyCode' =>
     (is => 'rw', isa => 'Perl6::Signature::Val::SigParam', required => 0);
 has 's_slurpyCapture' =>
     (is => 'rw', isa => 'Perl6::Signature::Val::SigParam', required => 0);
+
+sub find_named_param {
+    my($self, $label) = @_;
+    for my $param (@{ $self->s_namedList }) {
+        return $param if $param->p_label eq $label;
+    }
+    return;  # Or should this die?
+}
 
 sub to_string {
     my($self) = @_;
@@ -63,6 +76,10 @@ sub to_string {
         push @params, $positionals->[$i]->to_string(
                 required => $i < $self->s_requiredPositionalCount);
     }
+    push @params, map {
+        $_->to_string( style => 'named'
+                     , required => exists $self->s_requiredNames->{$_->p_label})
+        } @{ $self->s_namedList };
 
     return ":(" .
             join(" ", ($inv_str ? $inv_str : ()),
@@ -126,14 +143,20 @@ sub to_string {
     $args{required} = 1            if not exists $args{required};
     $args{style}    = 'positional' if not exists $args{style};
 
-    die "not implemented" unless $args{style} eq 'positional';
-
     die "required param can't have a default value" if
             $args{required} && $self->p_default;
 
-    # XXX good for positionals only.
-    my $ident = $self->p_variable;
-    $ident .= "?" if !$args{required} && not defined $self->p_default;
+    my $ident;
+    if ($args{style} eq 'positional') {
+        $ident = $self->p_variable;
+        $ident .= "?" if !$args{required} && not defined $self->p_default;
+    } else {
+        # TODO: implement a Perl6::...::Variable::basename
+        my($label, $variable) = ($self->p_label, $self->p_variable);
+        $ident = ":" . (($variable =~ /^.\Q$label\E$/) ?
+            $variable : "$label($variable)");
+        $ident .= "!" if $args{required};
+    }
 
     my $default = "= " . $self->p_default if $self->p_default;
 
@@ -150,7 +173,7 @@ sub to_string {
             "" : "<$p_slots->{$_}>";
         "is $qkey$val" } keys %$p_slots;
 
-    my @constraints = map { "where { ... }" } @{ $self->p_constraints || [] };
+    my @constraints = map { "where $_" } @{ $self->p_constraints || [] };
 
     return join(" ", @{ $self->p_types },
             $ident,
