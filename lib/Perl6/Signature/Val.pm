@@ -6,7 +6,7 @@ use Moose 0.33;
 
 package Perl6::Signature::Val::Sig;
 
-=begin Pugs code
+=begin Pugscode
 
 |-- AST for function signature.
 
@@ -92,7 +92,7 @@ package Perl6::Signature::Val::SigParam;
 use Moose;
 extends 'Perl6::Signature::Val';
 
-=begin Pugs code
+=begin Pugscode
 
 -- | Single parameter for a function or method, e.g.:
 --   Elk $m where { $m.antlers ~~ Velvet }

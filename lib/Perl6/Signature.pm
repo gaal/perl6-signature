@@ -6,6 +6,8 @@ use Parse::RecDescent;
 use Text::Balanced;
 use Perl6::Signature::Val;
 
+our $VERSION = '0.01';
+
 #$::RD_TRACE = 1;
 $::RD_HINT  = 1;
 
@@ -220,4 +222,215 @@ sub ::Y  { require YAML::Syck; YAML::Syck::Dump(@_) }
 sub ::YY { require Carp; Carp::confess(::Y(@_)) }
 
 6;
+
+__END__
+=head1 NAME
+
+Perl6::Signature - Parse, query, and pretty-print Perl 6 signatures
+
+=head1 SYNOPSIS
+
+    use Perl6::Signature;
+
+    my $sig = Perl6::Signature->parse(
+        ':($self: $x, Int $y = 42 where { $_ % 2 == 0 }, :$z is copy)');
+
+    print $sig->s_requiredPositionalCount;      # 1
+    print $sig->s_positionalList->[0]->p_label  # "x"
+    print $sig->s_namedList->[0]->p_hasAccess;  # "copy"
+
+    print $sig->to_string;
+        # ":($self: $x, Int $y = 42 where { $_ % 2 == 0 }, :$z is copy)"
+
+=head1 DESCRIPTION
+
+I<Alpha release - everything here is subject to change>
+
+B<Perl6::Signature> models routine signatures as specified in Synopsis 6 of
+the Perl 6 documentation. These signatures offer a rich language for
+expressing type constraints, default values, and the optionality (among other
+things) of routine parameters.
+
+Included is a parser for the Signature language, accessors and convenience
+methods for querying Signature objects, and a pretty-printer for producing
+their canonical textual representation.
+
+=head1 MODULE LAYOUT OVERVIEW
+
+B<Perl6::Signature> contains a B<Parse::RecDescent>-based parser for
+signatures.
+
+B<Perl6::Signature::Val> is our local base class for Perl 6 values.
+It doesn't do anything interested in itself, but if this distribution is
+bridged to another Perl 6-modeling distribution, this could be the first
+insertion point for glue methods. The next two modules subclass it.
+
+B<Perl6::Signature::Val::Sig> and B<Perl6::Signature::Val::SigParam>
+model full signatures and their consituent parameters. This is where you
+go to quiery and pretty-print your parsed objects.
+
+=head1 FUNCTIONS
+
+=head2 Perl6::Signature
+
+=over 4
+
+=item Perl6::Signature->parse(STRING)
+
+Parse a well-formed signature specification into a
+B<Perl6::Signature::Val::Sig> object. Returns undef on failure, and
+in some cases can die. (This needs to be regularized.)
+
+CAVEAT #1: we do "best effort" parsing for default values. Simple
+literals are okay; complex expressions may not be.
+
+CAVEAT #2: default value specifications are not evaluated by
+B<Perl6::Signature>, not-in-scope errors are not raised, and constant
+folding is not performed. There may be semantic implications to this.
+
+CAVEAT #3: we similarly do "best effort" to parse dynamic constraints
+(C<"where {....}"> blocks). Funky code might well fail to parse correctly.
+
+=back
+
+=head2 Perl6::Signature::Val::Sig
+
+=over 4
+
+=item $sig->to_string
+
+Pretty-print a Sig object into canonical textual form.
+
+"Canonical form" means regualar whitespace, implicit "!" on mandatory
+positional parameters, impicit "?" on optional named parameters, and
+so on. Code from dynamic constraints is reproduced verbatim.
+
+=item has 's_invocant' => (is => 'rw', isa => 'Perl6::Signature::Val::SigParam', required => 0);
+
+=item has 's_requiredPositionalCount' => (is => 'rw', isa => 'Int');
+
+=item has 's_requiredNames' => (is => 'rw', isa => 'HashRef');   # Set of names
+
+=item has 's_positionalList' => (is => 'rw', isa => 'ArrayRef[Perl6::Signature::Val::SigParam]');
+
+=item has 's_namedList' => (is => 'rw', isa => 'ArrayRef[Perl6::Signature::Val::SigParam]');
+
+=item has 's_slurpyScalarList' => (is => 'rw', isa => 'ArrayRef', required => 0);
+
+=item has 's_slurpyArray' => (is => 'rw', isa => 'Perl6::Signature::Val::SigParam', required => 0);
+
+=item has 's_slurpyHash' => (is => 'rw', isa => 'Perl6::Signature::Val::SigParam', required => 0);
+
+=item has 's_slurpyCode' => (is => 'rw', isa => 'Perl6::Signature::Val::SigParam', required => 0);
+
+=item has 's_slurpyCapture' => (is => 'rw', isa => 'Perl6::Signature::Val::SigParam', required => 0);
+
+=back
+
+=head2 Perl6::Signature::Val::SigParam
+
+=over 4
+
+=item $param->to_string(%args)
+
+Pretty-print a SigParam object into canonical form. Note that a SigParam
+doesn't know whether it is required or optional; nor whether it is positional
+or named. This must be supplied by the Sig container.
+
+=item has 'p_variable' =>    (is => 'rw', isa => 'Str');
+
+=item has 'p_types' =>       (is => 'rw', isa => 'ArrayRef');  # of types
+
+=item has 'p_constraints' => (is => 'rw', isa => 'ArrayRef');  # of code
+
+=item has 'p_unpacking' =>   (is => 'rw', isa => 'Perl6::Signature::Val::Sig|Undef', required => 0);
+
+=item has 'p_default' =>     (is => 'rw', required => 0);
+
+=item has 'p_label' =>       (is => 'rw', isa => 'Str');
+
+=item has 'p_slots' =>       (is => 'rw', isa => 'HashRef');
+
+=item has 'p_hasAccess' =>   (is => 'rw', );  # ro/rw/copy
+
+=item has 'p_isRef' =>       (is => 'rw', isa => 'Bool');
+
+=item has 'p_isContext' =>   (is => 'rw', isa => 'Bool');
+
+=item has 'p_isLazy' =>      (is => 'rw', isa => 'Bool');
+
+=back
+
+=head1 SEE ALSO
+
+=over 4
+
+=item L<http://perlcabal.org/syn/S06.html#Parameters_and_arguments>
+
+=item L<Moose>
+
+=item L<Parse::RecDescent>
+
+=back
+
+=head1 AUTHORS
+
+Gaal Yahas, C<< <gaal at forum2.org> >>
+
+
+=head1 BUGS
+
+Please report any bugs or feature requests to
+C<bug-perl6-signature at rt.cpan.org>, or through the web interface at
+L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Perl6-Signature>.
+I will be notified, and then you'll automatically be notified of progress on
+your bug as I make changes.
+
+=head1 SUPPORT
+
+You can find documentation for this module with the perldoc command.
+
+    perldoc Perl6::Signature
+
+You can also contact the maintainer at the address above or look for information at:
+
+=over 4
+
+=item * AnnoCPAN: Annotated CPAN documentation
+
+L<http://annocpan.org/dist/Perl6-Signature/>
+
+=item * Search CPAN
+
+L<http://search.cpan.org/dist/Perl6-Signature/>
+
+=item * Source repository
+
+L<http://code2.0beta.co.uk/moose/svn/Perl6-Signature/trunk/>
+
+=back
+
+=head1 COPYRIGHT (The "MIT" License)
+
+Copyright 2008 Gaal Yahas.
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+
+=cut
 
