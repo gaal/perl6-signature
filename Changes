@@ -1,4 +1,7 @@
 Changes for Perl6-Signature
 
-0.01    2008-04-27
+0.02    2008-04-27
+        Slurpy support
+
+0.01    2008-01-10
         First release.
