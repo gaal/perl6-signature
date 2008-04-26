@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 40;
+use Test::More tests => 43;
 use Test::Exception;
 
 use Perl6::Signature;
@@ -60,6 +60,9 @@ use Perl6::Signature;
         , ':($x,%y?)',            ':($x, %y?)',           'required and optional positionals'
         , ':(:$x?)',              ':(:$x)',               'optional short named, explicit "?"'
         , ':(:short($long)?)',    ':(:short($long))',     'optional long named, explicit "?"'
+        , ':(*@x, $y)',           ':($y, *@x)',           'slurpy array and positional'
+        , ':(*%x, $y)',           ':($y, *%x)',           'slurpy hash and positional'
+        , ':(*%x, $y, *@x)',      ':($y, *@x, *%x)',      'slurpy hash and positional'
         );
     while (my ($sig, $canonical, $desc) = splice @sigs, 0, 3) {
         lives_and { is(Perl6::Signature->parse($sig)->to_string, $canonical) } "(altspace) $desc";

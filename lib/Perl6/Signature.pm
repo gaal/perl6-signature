@@ -11,8 +11,12 @@ our $VERSION = '0.01';
 #$::RD_TRACE = 1;
 $::RD_HINT  = 1;
 
-our $SIGNATURE_GRAMMAR = << '.';
-    { use Text::Balanced qw(extract_bracketed); }
+our $SIGNATURE_GRAMMAR = << '#\'END';
+#\
+    {
+        use Text::Balanced qw(extract_bracketed);
+        use Carp qw(croak);
+    }
 
     Sig: Sig_colon | Sig_nocolon
 
@@ -33,25 +37,37 @@ our $SIGNATURE_GRAMMAR = << '.';
 
     Sigbody_noinv: Param(s? /,/)
         {
-          # calculate requiredPositionalCount, and make sure we don't have
-          # :($optional?, $required!) -- that's invalid.
+          my @params = @{ $item{'Param(s?)'} };
+          my @slurpies = map { $_->{param} } grep { $_->{slurpy} } @params;
+          my @nonslurpies = grep { !$_->{slurpy} } @params;
+          my @positionals = grep { $_->{style} eq 'positional' } @nonslurpies;
+          my @named = grep { $_->{style} eq 'named' } @nonslurpies;
 
-          my $params = $item{'Param(s?)'};
-          my @positionals = grep { $_->{style} eq 'positional' } @$params;
-          my @named = grep { $_->{style} eq 'named' } @$params;
           my $seen_optional;
           my $requiredPositionalCount = 0;
+
+          # calculate requiredPositionalCount, and make sure we don't have
+          # :($optional?, $required!) -- that's invalid.
           for my $param (@positionals) {
               $seen_optional++ if ! $param->{required};
               die "can't place required positional after an optional one" if
                   $param->{required} && $seen_optional;
               $requiredPositionalCount++ if ! $seen_optional;
           }
+
+          my %slurpies = map { $_->p_sigil => $_ } @slurpies;
+
+          my ( $slurpy_array, $slurpy_hash ) = ( @slurpies{qw(@ %)} );
+
+          croak "Only one slurpy of every type is allowed" if keys %slurpies != @slurpies;
+
           my $sig = Perl6::Signature::Val::Sig->new
               ( s_requiredPositionalCount => $requiredPositionalCount
               , s_positionalList          => [ map { $_->{param} } @positionals ]
               , s_namedList               => [ map { $_->{param} } @named ]
               , s_requiredNames           => { map { $_->{param}->p_label => 1 } grep { $_->{required} } @named }
+              , ( $slurpy_array ? ( s_slurpyArray => $slurpy_array ) : () ),
+              , ( $slurpy_hash  ? ( s_slurpyHash  => $slurpy_hash  ) : () ),
               );
           $return = $sig;
         }
@@ -59,6 +75,7 @@ our $SIGNATURE_GRAMMAR = << '.';
     Invocant: Param
 
     Param: ParamType(s?)
+           SlurpynessModifier(?)
            ParamIdentifier <skip:''>
            OptionalityModifier(?)
            <skip:'\s*'>
@@ -92,15 +109,16 @@ our $SIGNATURE_GRAMMAR = << '.';
                         (p_default => $item{'DefaultValueSpec(?)'}->[0]) : ())
                 , (@{ $item{'Constraint(s?)'} } ?
                         (p_constraints => [ @{ $item{'Constraint(s?)'} } ]) : ())
-                , p_hasAccess => $hasAccess
+                , ( $hasAccess ? ( p_hasAccess => $hasAccess ) : () ),
                 , p_isRef     => $isRef
                 , p_isContext => $isContext
                 , p_isLazy    => $isLazy
                 , p_slots     => { map { $_ => 1 } @slots }
                         # "is foo<42>" not supported yet.
                 );
+          my $slurpy      = 1 == @{ $item{'SlurpynessModifier(?)'} };
           my $optionality = $item{'OptionalityModifier(?)'}->[0] || '';
-          my $optional = 1 == @{ $item{'DefaultValueSpec(?)'} };
+          my $optional = scalar @{ $item{'DefaultValueSpec(?)'} };
           die "required parameter can't have default value" if
               $optional && $optionality eq '!';
           $optional = 1 if $style eq 'named' && $optionality ne '!';
@@ -109,6 +127,7 @@ our $SIGNATURE_GRAMMAR = << '.';
           $return = { param    => $param
                     , required => !$optional
                     , style    => $style
+                    , slurpy   => $slurpy
                     };
         }
 
@@ -148,6 +167,8 @@ our $SIGNATURE_GRAMMAR = << '.';
         { $return = $item[2]; 1; }
 
     OptionalityModifier: /[!?]/
+
+    SlurpynessModifier: /\*/
 
     Unpacking: Sig
 
@@ -205,9 +226,9 @@ our $SIGNATURE_GRAMMAR = << '.';
     # stuck with doing some half-assed parsing that would preclude e.g.
     # :($pi = 22/7)
     Literal: /\S+/
-.
+#'END
 
-my $parser = Parse::RecDescent->new($SIGNATURE_GRAMMAR);
+my $parser = Parse::RecDescent->new($SIGNATURE_GRAMMAR) || die "GRAMMAR NO WORKY *CWY* *CWY*";
 
 sub parse {
     my($self, $sig_str) = @_;

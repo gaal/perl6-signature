@@ -44,15 +44,15 @@ has 's_positionalList' =>
 has 's_namedList' =>
     (is => 'rw', isa => 'ArrayRef[Perl6::Signature::Val::SigParam]');
 has 's_slurpyScalarList' =>
-    (is => 'rw', isa => 'ArrayRef', required => 0);
+    (is => 'rw', isa => 'ArrayRef[Perl6::Signature::Val::SigParam]', required => 0, predicate => "has_s_slurpyScalarList");
 has 's_slurpyArray' =>
-    (is => 'rw', isa => 'Perl6::Signature::Val::SigParam', required => 0);
+    (is => 'rw', isa => 'Perl6::Signature::Val::SigParam', required => 0, predicate => "has_s_slurpyArray");
 has 's_slurpyHash' =>
-    (is => 'rw', isa => 'Perl6::Signature::Val::SigParam', required => 0);
+    (is => 'rw', isa => 'Perl6::Signature::Val::SigParam', required => 0, predicate => "has_s_slurpyHash");
 has 's_slurpyCode' =>
-    (is => 'rw', isa => 'Perl6::Signature::Val::SigParam', required => 0);
+    (is => 'rw', isa => 'Perl6::Signature::Val::SigParam', required => 0, predicate => "has_s_slurpyCode");
 has 's_slurpyCapture' =>
-    (is => 'rw', isa => 'Perl6::Signature::Val::SigParam', required => 0);
+    (is => 'rw', isa => 'Perl6::Signature::Val::SigParam', required => 0, predicate => "has_s_slurpyCapture");
 
 sub find_named_param {
     my($self, $label) = @_;
@@ -80,6 +80,9 @@ sub to_string {
         $_->to_string( style => 'named'
                      , required => exists $self->s_requiredNames->{$_->p_label})
         } @{ $self->s_namedList };
+
+    push @params, '*' . $self->s_slurpyArray->to_string if $self->has_s_slurpyArray;
+    push @params, '*' . $self->s_slurpyHash->to_string if $self->has_s_slurpyHash;
 
     return ":(" .
             join(" ", ($inv_str ? $inv_str : ()),
@@ -121,6 +124,11 @@ data SigParam = MkParam
 
 =cut
 
+use Moose::Util::TypeConstraints;
+
+enum __PACKAGE__ . "::Access" => qw(rw ro copy);
+enum __PACKAGE__ . "::Sigil" => qw($ % @ &);
+
 has 'p_variable' =>    (is => 'rw', isa => 'Str');
 has 'p_types' =>       (is => 'rw', isa => 'ArrayRef');  # of types
         # I don't actually remember why this isn't a scalar :(
@@ -130,10 +138,12 @@ has 'p_unpacking' =>   (is => 'rw', isa => 'Perl6::Signature::Val::Sig|Undef',
 has 'p_default' =>     (is => 'rw', required => 0);
 has 'p_label' =>       (is => 'rw', isa => 'Str');
 has 'p_slots' =>       (is => 'rw', isa => 'HashRef');
-has 'p_hasAccess' =>   (is => 'rw', );                   # XXX: enum?
+has 'p_hasAccess' =>   (is => 'rw', isa => __PACKAGE__ . "::Access", default => "ro");
 has 'p_isRef' =>       (is => 'rw', isa => 'Bool');
 has 'p_isContext' =>   (is => 'rw', isa => 'Bool');
 has 'p_isLazy' =>      (is => 'rw', isa => 'Bool');
+
+has 'p_sigil' =>       (is => "ro", isa => __PACKAGE__ . "::Sigil", lazy => 1, default => sub { substr( shift->p_variable, 0, 1 ) } );
 
 my %quoted_slots = map { $_ => 1 } qw(ro rw copy ref context lazy);
 
@@ -162,7 +172,6 @@ sub to_string {
 
     my $p_slots = $self->p_slots || {};
     my @slots;
-    $self->p_hasAccess('ro') if ! $self->p_hasAccess;
     push @slots, "is " . $self->p_hasAccess if $self->p_hasAccess ne 'ro';
     push @slots, "is ref"     if $self->p_isRef;
     push @slots, "is context" if $self->p_isContext;
