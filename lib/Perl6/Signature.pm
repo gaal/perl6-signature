@@ -218,8 +218,8 @@ sub parse {
 }
 
 # These are my favorite debugging tools. Share and enjoy.
-sub ::Y  { require YAML::Syck; YAML::Syck::Dump(@_) }
-sub ::YY { require Carp; Carp::confess(::Y(@_)) }
+#sub ::Y  { require YAML::Syck; YAML::Syck::Dump(@_) }
+#sub ::YY { require Carp; Carp::confess(::Y(@_)) }
 
 6;
 
