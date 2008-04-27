@@ -1,5 +1,6 @@
 \.svn
 ~$
+\.swp$
 MANIFEST.mine
 MANIFEST.r
 [5-9]\d-.*\.t
