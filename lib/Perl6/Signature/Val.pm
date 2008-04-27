@@ -80,7 +80,8 @@ has 's_slurpyCode' =>
     ( isa       => 'Perl6::Signature::Val::SigParam'
     , is        => 'rw'
     , required  => 0
-    , predicate => "has_s_slurpyCode");
+    , predicate => "has_s_slurpyCode"
+    );
 has 's_slurpyCapture' =>
     ( isa       => 'Perl6::Signature::Val::SigParam'
     , is        => 'rw'
