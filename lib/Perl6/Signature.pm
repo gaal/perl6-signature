@@ -6,7 +6,7 @@ use Parse::RecDescent;
 use Text::Balanced;
 use Perl6::Signature::Val;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 #$::RD_TRACE = 1;
 $::RD_HINT  = 1;
