@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 45;
+use Test::More tests => 47;
 use Test::Exception;
 
 use Perl6::Signature;
@@ -73,6 +73,8 @@ use Perl6::Signature;
     my @badsigs =
         ( ':($x?:)',              'optional invocant'
         , ':($x?, $y)',           'required positional after optional one'
+        , ':(Int| $x)',           'invalid type alternation',
+        , ':(|Int $x)',           'invalid type alternation',
         );
     while (my ($badsig, $desc) = splice @badsigs, 0, 2) {
         dies_ok { Perl6::Signature->parse($badsig) } "(badsig) $desc";
