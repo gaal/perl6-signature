@@ -231,7 +231,8 @@ sub to_string {
 
     my @constraints = map { "where $_" } @{ $self->p_constraints || [] };
 
-    return join(" ", @{ $self->p_types },
+    return join(" ",
+            (@{ $self->p_types } ? join("|", @{ $self->p_types }) : ()),
             $ident,
             ($self->p_unpacking ? $self->p_unpacking->to_string : ()),
             ($default ? $default : ()),
