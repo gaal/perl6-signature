@@ -235,6 +235,9 @@ sub parse {
 
     my $res = $parser->Sig($sig_str);
 
+    die "Unparsable signature"
+        unless $res;
+
     return $res;
 }
 
