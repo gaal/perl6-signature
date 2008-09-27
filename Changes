@@ -2,6 +2,7 @@ Changes for Perl6-Signature
 
 0.03    UNRELEASED
         Support for multiple parameter types (Florian Ragwitz).
+        Always die on unparsable input (Florian Ragwitz).
 
 0.02    2008-04-27
         Slurpy support
