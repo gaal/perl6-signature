@@ -74,7 +74,7 @@ our $SIGNATURE_GRAMMAR = << '#\'END';
 
     Invocant: Param
 
-    Param: ParamType(s?)
+    Param: ParamType(s? /\|/)
            SlurpynessModifier(?)
            ParamIdentifier <skip:''>
            OptionalityModifier(?)
