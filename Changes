@@ -1,6 +1,6 @@
 Changes for Perl6-Signature
 
-0.03    UNRELEASED
+0.03    2008-10-02
         Support for multiple parameter types (Florian Ragwitz).
         Always die on unparsable input (Florian Ragwitz).
 
