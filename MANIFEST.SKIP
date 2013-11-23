@@ -16,3 +16,5 @@ Perl6-Signature-.*
 \.bak$
 ^svk-commit
 pm_to_blib
+.gitignore
+.git

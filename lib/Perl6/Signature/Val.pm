@@ -164,8 +164,8 @@ data SigParam = MkParam
 
 use Moose::Util::TypeConstraints;
 
-enum __PACKAGE__ . "::Access" => qw(rw ro copy);
-enum __PACKAGE__ . "::Sigil" => qw($ % @ &);
+enum __PACKAGE__ . "::Access" => [ qw(rw ro copy) ];
+enum __PACKAGE__ . "::Sigil" => [ qw($ % @ &) ];
 
 has 'p_variable' =>    ( is => 'rw', isa => 'Str' );
 has 'p_types' =>       ( is => 'rw', isa => 'ArrayRef' );  # of types

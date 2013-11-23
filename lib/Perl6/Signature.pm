@@ -6,7 +6,7 @@ use Parse::RecDescent;
 use Text::Balanced;
 use Perl6::Signature::Val;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 #$::RD_TRACE = 1;
 $::RD_HINT  = 1;
@@ -435,7 +435,7 @@ L<http://search.cpan.org/dist/Perl6-Signature/>
 
 =item * Source repository
 
-L<http://code2.0beta.co.uk/moose/svn/Perl6-Signature/trunk/>
+L<https://github.com/gaal/perl6-signature/>
 
 =back
 
